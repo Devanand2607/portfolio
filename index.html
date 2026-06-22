@@ -700,17 +700,17 @@ footer::before{content:'';position:absolute;top:0;left:3rem;right:3rem;height:1p
           <div class="ci-item"><div class="ci-ico"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div><div><div class="ci-lbl">Location</div><div class="ci-val">Dindigul, Tamil Nadu</div></div></div>
         </div>
       </div>
-      <div class="cf rv d2">
+      <form class="cf rv d2" id="contactForm">
         <div class="cf-title">Send a Message</div>
         <div class="fg-row">
-          <div class="fg"><label>First Name</label><input type="text" placeholder="Devanand"></div>
-          <div class="fg"><label>Last Name</label><input type="text" placeholder="R"></div>
+          <div class="fg"><label>First Name</label><input type="text" id="firstname" required placeholder="Devanand"></div>
+          <div class="fg"><label>Last Name</label><input type="text" id="lastname" placeholder="R"></div>
         </div>
-        <div class="fg"><label>Email Address</label><input type="email" placeholder="your@email.com"></div>
-        <div class="fg"><label>Subject</label><input type="text" placeholder="Job Opportunity / Collaboration"></div>
-        <div class="fg"><label>Message</label><textarea placeholder="Your message..."></textarea></div>
-        <button class="cf-btn" onclick="this.textContent='Sent ✓';setTimeout(()=>this.textContent='Send Message →',3000)">Send Message →</button>
-      </div>
+        <div class="fg"><label>Email Address</label><input type="email" id="email" required placeholder="your@email.com"></div>
+        <div class="fg"><label>Subject</label><input type="text" id="subject" required placeholder="Job Opportunity / Collaboration"></div>
+        <div class="fg"><label>Message</label><textarea id="message" required placeholder="Your message..."></textarea></div>
+        <button type="submit" class="cf-btn" id="submitBtn">Send Message →</button>
+      </form>
     </div>
   </div>
 </section>
@@ -771,6 +771,58 @@ const sb=document.getElementById('skillBars');if(sb)sbo.observe(sb);
 /* ── CIRCLE SKILLS ── */
 const cso=new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting){cso.unobserve(x.target);x.target.querySelectorAll('.sk-card').forEach((card,i)=>{const pct=parseInt(card.dataset.pct)||75,fill=card.querySelector('.sk-bar-fill'),circ=2*Math.PI*26,offset=circ-(circ*pct/100);setTimeout(()=>{fill.style.strokeDashoffset=offset},i*120+200)})}})},{threshold:.3});
 const sg=document.getElementById('skillsGrid');if(sg)cso.observe(sg);
+
+/* ── CONTACT FORM SUBMISSION ── */
+const contactForm = document.getElementById('contactForm');
+const submitBtn = document.getElementById('submitBtn');
+
+if (contactForm) {
+  contactForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    // Disable button & show loading state
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Sending...';
+    
+    const formData = {
+      firstname: document.getElementById('firstname').value,
+      lastname: document.getElementById('lastname').value,
+      email: document.getElementById('email').value,
+      subject: document.getElementById('subject').value,
+      message: document.getElementById('message').value
+    };
+    
+    try {
+      const response = await fetch('http://localhost:5000/api/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      });
+      
+      const result = await response.json();
+      
+      if (response.ok && result.success) {
+        submitBtn.textContent = 'Sent ✓';
+        contactForm.reset();
+      } else {
+        submitBtn.textContent = 'Failed ❌';
+        console.error('Error:', result.error);
+        alert(result.error || 'Failed to send message. Please try again.');
+      }
+    } catch (error) {
+      submitBtn.textContent = 'Error ❌';
+      console.error('Error submitting form:', error);
+      alert('Could not connect to the mail server. Make sure the backend server is running.');
+    } finally {
+      setTimeout(() => {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Send Message →';
+      }, 4000);
+    }
+  });
+}
 </script>
 </body>
 </html>
